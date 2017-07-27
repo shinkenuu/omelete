@@ -2,19 +2,6 @@ import unittest
 from image_editor import MatrixEditor
 
 """
-* Utilize TDD de preferência;
-* Só importe uma biblioteca se você realmente precisar;
-* Utilize um versionamento git ou mercurial com todos os seus commits para que fique um registro histórico do seu desenvolvimento;
-
-Seu código será avaliado nos seguintes quesitos:
-* Completude da solução
-* Legibilidade
-* Simplicidade
-* Cobertura dos testes
-* PEP8
-
-
-
 Testes
 ------
 
@@ -75,9 +62,24 @@ REEEEEEERR
 RRRRRRRRRR
 """
 
+
 class TestMatrixEditor(unittest.TestCase):
     def setUp(self):
-        self.matrix_editor = None
+        pass
+
+    @staticmethod
+    def _verify_white_matrix(editor: MatrixEditor):
+        """
+        Verifies if all pixels of matrix is white ('0')
+        Made so we DRY in the tests
+        :param editor: the matrix editor to be verified
+        :return:
+        """
+        for h in range(editor.height):
+            for w in range(editor.width):
+                if editor.matrix[w][h] != '0':
+                    return False
+        return True
 
     def test_command_i(self):
         """
@@ -94,12 +96,30 @@ class TestMatrixEditor(unittest.TestCase):
         height = 6
         width = 5
 
-        self.matrix_editor = MatrixEditor(width=width, height=height)
+        editor = MatrixEditor(width=width, height=height)
+        self.assertTrue(self._verify_white_matrix(editor))
+
+    def test_command_c(self):
+        height = 3
+        width = 3
+        editor = MatrixEditor(width=width, height=height)
+        self.assertTrue(self._verify_white_matrix(editor))
+
+    def test_command_l(self):
+        height = 8
+        width = 5
+        editor = MatrixEditor(width=width, height=height)
+
+        dot_x = 3
+        dot_y = 2
+        editor.color_point(x=dot_x, y=dot_y, color='1')
 
         for h in range(height):
             for w in range(width):
-                self.assertTrue(self.matrix_editor.matrix[h][w] == 0)
-
+                if w == dot_x and h == dot_y:
+                    self.assertTrue(editor.matrix[w][h] == '1')
+                else:
+                    self.assertTrue(editor.matrix[w][h] == '0')
 
 
 if __name__ == '__main__':
