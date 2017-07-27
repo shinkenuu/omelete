@@ -19,7 +19,7 @@ class MatrixEditor(object):
             raise ValueError(
                 'Width and Height must be positive integers. Received height: {} width: {}'.format(height, width))
 
-        self._matrix = [['0' for _ in range(height)] for _ in range(width)]
+        self._matrix = [['0' for _ in range(width)] for _ in range(height)]
 
     @property
     def width(self):
@@ -41,7 +41,7 @@ class MatrixEditor(object):
         """
         for row in range(self.width):
             for col in range(self.height):
-                self.matrix[row][col] = '0'
+                self.matrix[col][row] = '0'
 
     def color_point(self, x: int, y: int, color: str):
         """
@@ -53,10 +53,30 @@ class MatrixEditor(object):
         :return:
         """
         if not self.is_valid_coordinate(x, y):
-            raise ValueError('Invalid coordinate')
+            raise IndexError('Coordinate out of bounds')
         if not len(color) == 1:
-            raise ValueError('color param must be a single character')
-        self._matrix[x][y] = color
+            raise ValueError('Color param must be a single character')
+        self._matrix[y][x] = color
+
+    def save_to_file(self, file_path: str):
+        """
+        Saves the matrix in a file
+        :param file_path: the file path to save the matrix in
+        :return:
+        """
+        try:
+            with open(file_path, 'w'):
+                pass
+        except OSError as err:
+            print('Couldnt write file at {}. OSError: {}'.format(file_path, str(err)))
+
+        content = []
+        for line_idx in range(self.height):
+            content.append(''.join(self.matrix[line_idx]))
+        content = '\n'.join(content)
+
+        with open(file_path, 'w') as file:
+            file.write(content)
 
     def is_valid_coordinate(self, x: int, y: int) -> bool:
         """
