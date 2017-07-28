@@ -81,6 +81,13 @@ class TestMatrixEditor(unittest.TestCase):
                     return False
         return True
 
+    @staticmethod
+    def _check_dot(matrix: [[]], matrix_height: int, matrix_width: int, dot_coordinate: tuple, color: str) -> bool:
+        for h in range(matrix_height):
+            for w in range(matrix_width):
+                if w == dot_coordinate[0] and h == dot_coordinate[1]:
+                    return matrix[h][w] == color
+
     def test_command_i(self):
         """
         Tests the I command - Initializing a matrix
@@ -115,14 +122,6 @@ class TestMatrixEditor(unittest.TestCase):
         Tests the L command - Writes a char within the matrix
         :return:
         """
-        def check_dot():
-            for h in range(height):
-                for w in range(width):
-                    if w == dot_x and h == dot_y:
-                        self.assertTrue(editor.matrix[h][w] == '1')
-                    else:
-                        self.assertTrue(editor.matrix[h][w] == '0')
-
         width = 5
         height = 8
         editor = MatrixEditor(width=width, height=height)
@@ -130,7 +129,8 @@ class TestMatrixEditor(unittest.TestCase):
         dot_x = 3
         dot_y = 2
         editor.color_point(x=dot_x, y=dot_y, color='1')
-        check_dot()
+        self._check_dot(matrix=editor.matrix, matrix_height=height, matrix_width=width,
+                        dot_coordinate=(dot_x, dot_y), color='1')
 
         with self.assertRaises(IndexError) as exc:
             editor.color_point(x=dot_x, y=dot_y + height, color='F')
@@ -139,6 +139,96 @@ class TestMatrixEditor(unittest.TestCase):
         with self.assertRaises(ValueError) as exc:
             editor.color_point(x=dot_x, y=dot_y, color='')
         self.assertTrue('Color param must be a single character' == str(exc.exception))
+
+    def test_command_v(self):
+        """
+        Tests the V command - Draws a vertical line
+        :return:
+        """
+        height = 10
+        width = 5
+        editor = MatrixEditor(width=width, height=height)
+
+        a_dot = (1, 2)
+        b_dot = (1, 7)
+        color = 'V'
+        editor.draw_line(direction='v', a_dot_coordinate=a_dot, b_dot_coordinate=b_dot, color=color)
+
+        for y in range(a_dot[1], b_dot[1] + 1):
+            self.assertTrue(self._check_dot(matrix=editor.matrix, matrix_height=height, matrix_width=width,
+                                            dot_coordinate=(b_dot[0], y), color=color))
+
+        with self.assertRaises(ValueError) as exc:
+            editor.draw_line(direction='f', a_dot_coordinate=a_dot, b_dot_coordinate=b_dot, color=color)
+        self.assertTrue('Direction must be' in str(exc.exception))
+
+        with self.assertRaises(ValueError) as exc:
+            editor.draw_line(direction='v', a_dot_coordinate=a_dot, b_dot_coordinate=(0, 1, 2), color=color)
+        self.assertTrue('Coordinates must be a 2-sized tuple' == str(exc.exception))
+
+        with self.assertRaises(ValueError) as exc:
+            editor.draw_line(direction='v', a_dot_coordinate=(0, 1, 1), b_dot_coordinate=b_dot, color=color)
+        self.assertTrue('Coordinates must be a 2-sized tuple' == str(exc.exception))
+
+        with self.assertRaises(IndexError) as exc:
+            editor.draw_line(direction='v', a_dot_coordinate=(a_dot[0], a_dot[1] + height),
+                             b_dot_coordinate=b_dot, color=color)
+        self.assertTrue('Coordinate out of bounds' in str(exc.exception))
+
+        with self.assertRaises(IndexError) as exc:
+            editor.draw_line(direction='v', a_dot_coordinate=a_dot,
+                             b_dot_coordinate=(b_dot[0] + width, b_dot[1]), color=color)
+        self.assertTrue('Coordinate out of bounds' in str(exc.exception))
+
+        with self.assertRaises(ValueError) as exc:
+            editor.draw_line(direction='v', a_dot_coordinate=a_dot,
+                             b_dot_coordinate=b_dot, color='red')
+        self.assertTrue('single character' in str(exc.exception))
+
+    def test_command_h(self):
+        """
+        Tests the H command - Draws a horizontal line
+        :return:
+        """
+        height = 13
+        width = 6
+        editor = MatrixEditor(width=width, height=height)
+
+        a_dot = (3, 8)
+        b_dot = (5, 8)
+        color = 'H'
+        editor.draw_line(direction='h', a_dot_coordinate=a_dot, b_dot_coordinate=b_dot, color=color)
+
+        for x in range(a_dot[0], b_dot[0] + 1):
+            self.assertTrue(self._check_dot(matrix=editor.matrix, matrix_height=height, matrix_width=width,
+                                            dot_coordinate=(x, b_dot[1]), color=color))
+
+        with self.assertRaises(ValueError) as exc:
+            editor.draw_line(direction='b', a_dot_coordinate=a_dot, b_dot_coordinate=b_dot, color=color)
+        self.assertTrue('Direction must be' in str(exc.exception))
+
+        with self.assertRaises(ValueError) as exc:
+            editor.draw_line(direction='h', a_dot_coordinate=(0, ), b_dot_coordinate=b_dot, color=color)
+        self.assertTrue('Coordinates must be a 2-sized tuple' == str(exc.exception))
+
+        with self.assertRaises(ValueError) as exc:
+            editor.draw_line(direction='h', a_dot_coordinate=a_dot, b_dot_coordinate=(1, 2, 0), color=color)
+        self.assertTrue('Coordinates must be a 2-sized tuple' == str(exc.exception))
+
+        with self.assertRaises(IndexError) as exc:
+            editor.draw_line(direction='h', a_dot_coordinate=a_dot,
+                             b_dot_coordinate=(b_dot[0], b_dot[1] + height), color=color)
+        self.assertTrue('Coordinate out of bounds' in str(exc.exception))
+
+        with self.assertRaises(IndexError) as exc:
+            editor.draw_line(direction='h', a_dot_coordinate=(a_dot[0] + width, a_dot[1]),
+                             b_dot_coordinate=b_dot, color=color)
+        self.assertTrue('Coordinate out of bounds' in str(exc.exception))
+
+        with self.assertRaises(ValueError) as exc:
+            editor.draw_line(direction='h', a_dot_coordinate=a_dot,
+                             b_dot_coordinate=b_dot, color='')
+        self.assertTrue('single character' in str(exc.exception))
 
     def test_command_s(self):
         """
