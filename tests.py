@@ -1,67 +1,6 @@
 import unittest
 from image_editor import MatrixEditor
 
-"""
-Testes
-------
-
-Entrada 01:
-
-I 5 6
-L 2 3 A
-S one.bmp
-G 2 3 J
-V 2 3 4 W
-H 3 4 2 Z
-F 3 3 J
-S two.bmp
-X
-
-Saida 01:
-
-one.bmp
-OOOOO
-OOOOO
-OAOOO
-OOOOO
-OOOOO
-OOOOO
-
-two.bmp
-JJJJJ
-JJZZJ
-JWJJJ
-JWJJJ
-JJJJJ
-JJJJJ
-
-Entrada 02:
-
-I 10 9
-L 5 3 A
-G 2 3 J
-V 2 3 4 W
-H 1 10 5 Z
-F 3 3 J
-K 2 7 8 8 E
-F 9 9 R
-S one.bmp
-X
-
-Saida 02:
-
-one.bmp
-JJJJJJJJJJ
-JJJJJJJJJJ
-JWJJAJJJJJ
-JWJJJJJJJJ
-ZZZZZZZZZZ
-RRRRRRRRRR
-REEEEEEERR
-REEEEEEERR
-RRRRRRRRRR
-"""
-
 
 class TestMatrixEditor(unittest.TestCase):
     def setUp(self):
@@ -252,6 +191,38 @@ class TestMatrixEditor(unittest.TestCase):
         with self.assertRaises(ValueError) as exc:
             editor.draw_line(direction='b', a_dot_coordinate=a_dot, b_dot_coordinate=b_dot, color=color)
         self.assertTrue('Direction must be' in str(exc.exception))
+
+    def test_command_f(self):
+        """
+        Tests the F command - Paints a region
+        :return:
+        """
+        height = 6
+        width = 5
+        editor = MatrixEditor(width=width, height=height)
+        editor._matrix = [
+            ['0', '0', '1', '0', '1'],
+            ['1', '1', '1', '1', '1'],
+            ['0', '1', '1', '1', '1'],
+            ['1', '1', '1', '0', '1'],
+            ['0', '0', '1', '0', '0'],
+            ['1', '1', '1', '0', '1'],
+        ]
+        
+        expected_matrix = [
+            ['0', '0', '.', '0', '.'],
+            ['.', '.', '.', '.', '.'],
+            ['0', '.', '.', '.', '.'],
+            ['.', '.', '.', '0', '.'],
+            ['0', '0', '.', '0', '0'],
+            ['.', '.', '.', '0', '1'],
+        ] 
+
+        a_dot = (2, 3)
+        color = '.'
+        editor.color_region(dot_within_coordinate=a_dot, color=color)
+
+        self.assertEqual(editor.matrix, expected_matrix)
 
     def test_command_s(self):
         """
