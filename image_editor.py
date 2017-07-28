@@ -52,8 +52,7 @@ class MatrixEditor(object):
         :return:
         """
         self._verify_coordinate(coordinate=coordinate)
-        if not len(color) == 1:
-            raise ValueError('Color param must be a single character')
+        self._verify_color(color=color)
         self._matrix[coordinate[1]][coordinate[0]] = color
 
     def draw_line(self, direction: str, a_dot_coordinate: tuple, b_dot_coordinate: tuple, color: str):
@@ -99,9 +98,7 @@ class MatrixEditor(object):
 
         self._verify_coordinate(a_dot_coordinate)
         self._verify_coordinate(b_dot_coordinate)
-
-        if not len(color) == 1:
-            raise ValueError('Color param must be a single character')
+        self._verify_color(color=color)
 
         if direction == 'v':
             draw_vertical()
@@ -146,6 +143,31 @@ class MatrixEditor(object):
                        b_dot_coordinate=upper_left_corner_coordinate,
                        color=color)
 
+    def color_region(self, dot_within_coordinate: tuple, color: str):
+        """
+        Colors a region around the dot with color
+        F command
+        :param dot_within_coordinate: Coordinate to the dot with the region
+        :param color: the color to paint with
+        :return:
+        """
+        def spread_ink(pixel_coordinate: tuple):
+            for x in range(pixel_coordinate[0] - 1, pixel_coordinate[0] + 2):
+                for y in range(pixel_coordinate[1] - 1, pixel_coordinate[1] + 2):
+                    if 0 <= x < self.width and 0 <= y < self.height:
+                        if self.matrix[y][x] == previous_color:
+                            self.matrix[y][x] = color
+                            pixels_to_visit.append((x, y))
+
+        self._verify_coordinate(dot_within_coordinate)
+        self._verify_color(color)
+
+        pixels_to_visit = [dot_within_coordinate]
+        previous_color = self.matrix[dot_within_coordinate[1]][dot_within_coordinate[0]]
+
+        while len(pixels_to_visit) > 0:
+            spread_ink(pixels_to_visit.pop(0))
+
     def save_to_file(self, file_path: str):
         """
         Saves the matrix in a file
@@ -186,9 +208,100 @@ class MatrixEditor(object):
         if not is_valid_coordinate(*coordinate):
             raise IndexError('Coordinate out of bounds')
 
+    @staticmethod
+    def _verify_color(color: str):
+        if not len(color) == 1:
+            raise ValueError('Color param must be a single character')
+
+
+def command_decoder(editor: MatrixEditor, command: tuple, *args):
+    """
+    Decodes command and execute it
+    :param editor:
+    :param command:
+    :param args: the arguments of the command
+    :return: None if command wasnt executed OK
+    """
+    def i_handler(m, n):
+        return MatrixEditor(width=int(m), height=int(n))
+
+    def s_handler(name):
+        editor.save_to_file(file_path=name)
+
+    def c_handler():
+        editor.clear_matrix()
+
+    def l_handler(x, y, c):
+        editor.color_dot(coordinate=(int(x) - 1, int(y) - 1), color=c)
+
+    def v_handler(x, y1, y2, c):
+        editor.draw_line(direction='v',
+                         a_dot_coordinate=(int(x) - 1, int(y1) - 1),
+                         b_dot_coordinate=(int(x) - 1, int(y2) - 1),
+                         color=c)
+
+    def h_handler(x1, x2, y, c):
+        editor.draw_line(direction='h',
+                         a_dot_coordinate=(int(x1) - 1, int(y) - 1),
+                         b_dot_coordinate=(int(x2) -1, int(y) - 1), color=c)
+
+    def k_handler(x1, y1, x2, y2, c):
+        editor.draw_rect(upper_left_corner_coordinate=(int(x1) - 1, int(y1) - 1),
+                         lower_right_corner_coordinate=(int(x2) - 1, int(y2) - 1),
+                         color=c)
+
+    def f_handler(x, y, c):
+        editor.color_region(dot_within_coordinate=(int(x) - 1, int(y) - 1), color=c)
+
+    try:
+        if str(command[0]).upper() == 'I':
+            return i_handler(*args)
+        elif str(command[0]).upper() == 'C':
+            c_handler()
+            return True
+        elif str(command[0]).upper() == 'L':
+            l_handler(*args)
+            return True
+        elif str(command[0]).upper() == 'V':
+            v_handler(*args)
+            return True
+        elif str(command[0]).upper() == 'H':
+            h_handler(*args)
+            return True
+        elif str(command[0]).upper() == 'K':
+            k_handler(*args)
+            return True
+        elif str(command[0]).upper() == 'F':
+            f_handler(*args)
+            return True
+        elif str(command[0]).upper() == 'S':
+            s_handler(*args)
+            return True
+        elif str(command[0]).upper() == 'X':
+            return True
+        else:
+            return None
+    except Exception as err:
+        return str(err)
+
 
 def main():
-    pass
+    """
+    Main function to read and handle commands via stdin
+    :return:
+    """
+    editor = object()
+    command = ''
+    while command != 'X':
+        command = str(input('Insert command: '))
+        split_command = command.split(' ')
+        command_result = command_decoder(editor, *split_command)
+        if command_result is None:
+            print('Unrecognized command')
+        elif type(command_result) is str:
+            print(command_result)
+        elif split_command[0].upper() == 'I':
+            editor = command_result
 
 
 if __name__ == '__main__':
