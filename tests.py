@@ -126,18 +126,17 @@ class TestMatrixEditor(unittest.TestCase):
         height = 8
         editor = MatrixEditor(width=width, height=height)
 
-        dot_x = 3
-        dot_y = 2
-        editor.color_point(x=dot_x, y=dot_y, color='1')
+        dot_coordinate = (3, 2)
+        editor.color_dot(coordinate=dot_coordinate, color='1')
         self._check_dot(matrix=editor.matrix, matrix_height=height, matrix_width=width,
-                        dot_coordinate=(dot_x, dot_y), color='1')
+                        dot_coordinate=dot_coordinate, color='1')
 
         with self.assertRaises(IndexError) as exc:
-            editor.color_point(x=dot_x, y=dot_y + height, color='F')
+            editor.color_dot(coordinate=(dot_coordinate[0] + width, dot_coordinate[1]), color='F')
         self.assertTrue('Coordinate out of bounds' == str(exc.exception))
 
         with self.assertRaises(ValueError) as exc:
-            editor.color_point(x=dot_x, y=dot_y, color='')
+            editor.color_dot(coordinate=dot_coordinate, color='')
         self.assertTrue('Color param must be a single character' == str(exc.exception))
 
     def test_command_v(self):
@@ -229,6 +228,30 @@ class TestMatrixEditor(unittest.TestCase):
             editor.draw_line(direction='h', a_dot_coordinate=a_dot,
                              b_dot_coordinate=b_dot, color='')
         self.assertTrue('single character' in str(exc.exception))
+
+    def test_command_k(self):
+        """
+        Tests the K command - Draws a rectangle
+        :return:
+        """
+        height = 8
+        width = 10
+        editor = MatrixEditor(width=width, height=height)
+
+        a_dot = (1, 1)
+        b_dot = (7, 7)
+        color = '.'
+        editor.draw_rect(upper_left_corner_coordinate=a_dot, lower_right_corner_coordinate=b_dot, color=color)
+
+        for x in range(width):
+            for y in range(height):
+                if x in (a_dot[0], b_dot[0]) and y in (a_dot[1], b_dot[1]):
+                    self.assertTrue(self._check_dot(matrix=editor.matrix, matrix_height=height, matrix_width=width,
+                                                    dot_coordinate=(x, y), color=color))
+
+        with self.assertRaises(ValueError) as exc:
+            editor.draw_line(direction='b', a_dot_coordinate=a_dot, b_dot_coordinate=b_dot, color=color)
+        self.assertTrue('Direction must be' in str(exc.exception))
 
     def test_command_s(self):
         """
