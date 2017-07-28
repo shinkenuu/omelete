@@ -58,6 +58,59 @@ class MatrixEditor(object):
             raise ValueError('Color param must be a single character')
         self._matrix[y][x] = color
 
+    def draw_line(self, direction: str, a_dot_coordinate: tuple, b_dot_coordinate: tuple, color: str):
+        """
+        Draws a line in the :param direction: connecting :param a_dot: to :param b_dot with :param color
+        V & H commands
+        :param direction: ['v'|'h']]
+        :param a_dot_coordinate: (Xa, Ya)
+        :param b_dot_coordinate: (Xb, Yb)
+        :param color: the character to draw the line with
+        :return:
+        """
+        def draw_horizontal():
+            if a_dot_coordinate[1] != b_dot_coordinate[1]:
+                raise ValueError('The Y axis of both coordinates must be the same for a horizontal line')
+
+            if a_dot_coordinate[0] > b_dot_coordinate[0]:
+                right_most_dot = a_dot_coordinate
+                left_most_dot = b_dot_coordinate
+            else:
+                right_most_dot = b_dot_coordinate
+                left_most_dot = a_dot_coordinate
+
+            for x in range(left_most_dot[0], right_most_dot[0] + 1):
+                self.color_point(x=x, y=a_dot_coordinate[1], color=color)
+
+        def draw_vertical():
+            if a_dot_coordinate[0] != b_dot_coordinate[0]:
+                raise ValueError('The X axis of both coordinates must be the same for a vertical line')
+
+            if a_dot_coordinate[1] > b_dot_coordinate[1]:
+                higher_dot = a_dot_coordinate
+                lesser_dot = b_dot_coordinate
+            else:
+                higher_dot = b_dot_coordinate
+                lesser_dot = a_dot_coordinate
+
+            for y in range(lesser_dot[1], higher_dot[1] + 1):
+                self.color_point(x=a_dot_coordinate[0], y=y, color=color)
+
+        if direction not in ('v', 'h'):
+            raise ValueError('Direction must be either "v" (vertical) or "h" (horizontal)')
+        if len(a_dot_coordinate) != 2 or len(b_dot_coordinate) != 2:
+            raise ValueError('Coordinates must be a 2-sized tuple')
+        if not self.is_valid_coordinate(*a_dot_coordinate) or not self.is_valid_coordinate(*b_dot_coordinate):
+            raise IndexError('Coordinate out of bounds: ({}, {})'.format(str(a_dot_coordinate[0]),
+                                                                         str(a_dot_coordinate[1])))
+        if not len(color) == 1:
+            raise ValueError('Color param must be a single character')
+
+        if direction == 'v':
+            draw_vertical()
+        else:
+            draw_horizontal()
+
     def save_to_file(self, file_path: str):
         """
         Saves the matrix in a file
