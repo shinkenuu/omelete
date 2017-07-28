@@ -43,20 +43,18 @@ class MatrixEditor(object):
             for col in range(self.height):
                 self.matrix[col][row] = '0'
 
-    def color_point(self, x: int, y: int, color: str):
+    def color_dot(self, coordinate: tuple, color: str):
         """
         Colors a pixel at the coordinate (x, y) with color
         L command
-        :param x: the X coordinate of the point
-        :param y: the Y coordinate of the point
+        :param coordinate: the coordinate of the dot
         :param color: the color to paint the color with
         :return:
         """
-        if not self.is_valid_coordinate(x, y):
-            raise IndexError('Coordinate out of bounds')
+        self._verify_coordinate(coordinate=coordinate)
         if not len(color) == 1:
             raise ValueError('Color param must be a single character')
-        self._matrix[y][x] = color
+        self._matrix[coordinate[1]][coordinate[0]] = color
 
     def draw_line(self, direction: str, a_dot_coordinate: tuple, b_dot_coordinate: tuple, color: str):
         """
@@ -80,7 +78,7 @@ class MatrixEditor(object):
                 left_most_dot = a_dot_coordinate
 
             for x in range(left_most_dot[0], right_most_dot[0] + 1):
-                self.color_point(x=x, y=a_dot_coordinate[1], color=color)
+                self.color_dot((x, a_dot_coordinate[1]), color=color)
 
         def draw_vertical():
             if a_dot_coordinate[0] != b_dot_coordinate[0]:
@@ -94,15 +92,14 @@ class MatrixEditor(object):
                 lesser_dot = a_dot_coordinate
 
             for y in range(lesser_dot[1], higher_dot[1] + 1):
-                self.color_point(x=a_dot_coordinate[0], y=y, color=color)
+                self.color_dot((a_dot_coordinate[0], y), color=color)
 
         if direction not in ('v', 'h'):
             raise ValueError('Direction must be either "v" (vertical) or "h" (horizontal)')
-        if len(a_dot_coordinate) != 2 or len(b_dot_coordinate) != 2:
-            raise ValueError('Coordinates must be a 2-sized tuple')
-        if not self.is_valid_coordinate(*a_dot_coordinate) or not self.is_valid_coordinate(*b_dot_coordinate):
-            raise IndexError('Coordinate out of bounds: ({}, {})'.format(str(a_dot_coordinate[0]),
-                                                                         str(a_dot_coordinate[1])))
+
+        self._verify_coordinate(a_dot_coordinate)
+        self._verify_coordinate(b_dot_coordinate)
+
         if not len(color) == 1:
             raise ValueError('Color param must be a single character')
 
@@ -110,6 +107,44 @@ class MatrixEditor(object):
             draw_vertical()
         else:
             draw_horizontal()
+
+    def draw_rect(self, upper_left_corner_coordinate: tuple, lower_right_corner_coordinate: tuple, color: str):
+        """
+        Draws a rectangle, with the upper-left corner to the lower-right corner of the matrix with color
+        K command
+        :param upper_left_corner_coordinate: upper-left corner coordinate of the rectangle
+        :param lower_right_corner_coordinate: lower-right corner coordinate of the rectangle
+        :param color: the character to draw the rectangle with
+        :return:
+        """
+        upper_right_corner_coordinate = (lower_right_corner_coordinate[0], upper_left_corner_coordinate[1])
+        lower_left_corner_coordinate = (upper_left_corner_coordinate[0], lower_right_corner_coordinate[1])
+
+        self._verify_coordinate(upper_left_corner_coordinate)
+        self._verify_coordinate(lower_right_corner_coordinate)
+        self._verify_coordinate(upper_right_corner_coordinate)
+        self._verify_coordinate(lower_left_corner_coordinate)
+
+        # upper row
+        self.draw_line(direction='h',
+                       a_dot_coordinate=upper_left_corner_coordinate,
+                       b_dot_coordinate=upper_right_corner_coordinate,
+                       color=color)
+        # right column
+        self.draw_line(direction='v',
+                       a_dot_coordinate=upper_right_corner_coordinate,
+                       b_dot_coordinate=lower_right_corner_coordinate,
+                       color=color)
+        # bottom row
+        self.draw_line(direction='h',
+                       a_dot_coordinate=lower_right_corner_coordinate,
+                       b_dot_coordinate=lower_left_corner_coordinate,
+                       color=color)
+        # left column
+        self.draw_line(direction='v',
+                       a_dot_coordinate=lower_left_corner_coordinate,
+                       b_dot_coordinate=upper_left_corner_coordinate,
+                       color=color)
 
     def save_to_file(self, file_path: str):
         """
@@ -131,14 +166,25 @@ class MatrixEditor(object):
         with open(file_path, 'w') as file:
             file.write(content)
 
-    def is_valid_coordinate(self, x: int, y: int) -> bool:
+    def _verify_coordinate(self, coordinate: tuple):
         """
-        Checks if the coordinate is valid within the current matrix
-        :param x: the X coordinate of the point
-        :param y: the Y coordinate of the point
-        :return: True if valid, False otherwise
+        Verifies the coordinate. Raises any necessary Exception
+        :param coordinate: the coordinate to be verified
+        :return:
         """
-        return self.width >= x and self.height >= y
+        def is_valid_coordinate(x: int, y: int) -> bool:
+            """
+            Checks if the coordinate is valid within the current matrix
+            :param x: the X coordinate of the point
+            :param y: the Y coordinate of the point
+            :return: True if valid, False otherwise
+            """
+            return self.width >= x and self.height >= y
+
+        if len(coordinate) != 2:
+            raise ValueError('Coordinates must be a 2-sized tuple')
+        if not is_valid_coordinate(*coordinate):
+            raise IndexError('Coordinate out of bounds')
 
 
 def main():
